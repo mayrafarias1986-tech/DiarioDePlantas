@@ -15,3 +15,6 @@ Tecnologias y Librerias Utilizadas
 - Base de Datos: Room (SQLite local)
 - Carga de Imagenes: Coil
 - Ubicacion GPS: Google Play Services FusedLocationProviderClient
+## Capturas de Pantalla de la Aplicación
+<img width="493" height="833" alt="image" src="https://github.com/user-attachments/assets/de9039c2-0c14-46cf-a9aa-bc151ddad6f8" />
+<img width="497" height="846" alt="image" src="https://github.com/user-attachments/assets/117f44e8-91da-4879-a046-d058504e1cb0" />
