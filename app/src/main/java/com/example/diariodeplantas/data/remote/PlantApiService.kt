@@ -1,36 +1,46 @@
-
 package com.example.diariodeplantas.data.remote
 
+import com.google.gson.annotations.SerializedName
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 
-// Modelo de datos para la API
 data class PlantApiItem(
-    val id: Int,
-    val name: String,
-    val category: String,
-    val waterRequirement: String
+    @SerializedName("id") val id: Int? = 0,
+    @SerializedName("nombreComun") val name: String? = "",
+    @SerializedName("nombreCientifico") val scientificName: String? = "",
+    @SerializedName("tipo") val category: String? = "",
+    @SerializedName("frecuenciaRiego") val waterRequirement: String? = "",
+    @SerializedName("imagenUrl") val imageUrl: String? = ""
 )
 
-// Estados de la UI para manejar Carga, Éxito y Error
 sealed interface ApiUiState {
     data class Success(val plants: List<PlantApiItem>) : ApiUiState
     object Error : ApiUiState
     object Loading : ApiUiState
 }
 
-// Interfaz de Retrofit
 interface PlantApiService {
-    @GET("plants.json")
+    @GET("maestro/plantas.json")
     suspend fun getPlantCatalog(): List<PlantApiItem>
 
     companion object {
-        private const val BASE_URL = "https://raw.githubusercontent.com/example/"
+        private const val BASE_URL = "https://raw.githubusercontent.com/mayrafarias1986-tech/DiarioDePlantas/"
 
         fun create(): PlantApiService {
+            val client = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .addHeader("User-Agent", "Mozilla/5.0")
+                        .build()
+                    chain.proceed(request)
+                }
+                .build()
+
             return Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(PlantApiService::class.java)

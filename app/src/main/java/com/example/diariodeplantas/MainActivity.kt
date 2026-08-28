@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,7 +14,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.diariodeplantas.data.local.PlantaDatabase
 import com.example.diariodeplantas.data.local.PlantaRepository
 import com.example.diariodeplantas.data.local.UserPreferencesRepository
-import com.example.diariodeplantas.ui.ApiPlantViewModel
 import com.example.diariodeplantas.ui.PlantaViewModel
 import com.example.diariodeplantas.ui.SettingsScreen
 import com.example.diariodeplantas.ui.SettingsViewModel
@@ -20,50 +21,63 @@ import com.example.diariodeplantas.ui.screens.AddPlantaScreen
 import com.example.diariodeplantas.ui.screens.ApiCatalogScreen
 import com.example.diariodeplantas.ui.screens.HomeScreen
 import com.example.diariodeplantas.ui.theme.DiarioDePlantasTheme
+import com.example.diariodeplantas.ui.viewmodel.ApiPlantViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val database = PlantaDatabase.getDatabase(this)
-        val plantaRepo = PlantaRepository(database.plantaDao())
-        val userPrefRepo = UserPreferencesRepository(this)
+        val repository = PlantaRepository(database.plantaDao())
+        val userPreferencesRepository = UserPreferencesRepository(this)
 
         setContent {
-            val settingsViewModel = SettingsViewModel(userPrefRepo)
-            val isDarkMode by settingsViewModel.isDarkMode.collectAsState()
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return SettingsViewModel(userPreferencesRepository) as T
+                    }
+                }
+            )
+            val isDarkTheme by settingsViewModel.isDarkMode.collectAsState(initial = false)
 
-            val plantaViewModel = PlantaViewModel(plantaRepo)
-            val apiViewModel: ApiPlantViewModel = viewModel()
-
-            DiarioDePlantasTheme(darkTheme = isDarkMode) {
+            DiarioDePlantasTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
 
+                val plantaViewModel: PlantaViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return PlantaViewModel(repository) as T
+                        }
+                    }
+                )
+                val apiPlantViewModel: ApiPlantViewModel = viewModel()
+
                 NavHost(navController = navController, startDestination = "home") {
-                    composable(route = "home") {
+                    composable("home") {
                         HomeScreen(
                             viewModel = plantaViewModel,
                             onNavegarAgregar = { navController.navigate("add") },
                             onNavegarAjustes = { navController.navigate("settings") },
-                            onNavegarApi = { navController.navigate("api") }
+                            onNavegarApi = { navController.navigate("apiCatalog") }
                         )
                     }
-                    composable(route = "add") {
+                    composable("add") {
                         AddPlantaScreen(
                             viewModel = plantaViewModel,
                             onVolver = { navController.popBackStack() }
                         )
                     }
-                    composable(route = "settings") {
+                    composable("settings") {
                         SettingsScreen(
-                            isDarkMode = isDarkMode,
-                            onDarkModeChanged = { settingsViewModel.toggleDarkMode(it) },
+                            isDarkMode = isDarkTheme,
+                            onDarkModeChanged = { enabled -> settingsViewModel.toggleDarkMode(enabled) },
                             onBackClick = { navController.popBackStack() }
                         )
                     }
-                    composable(route = "api") {
+                    composable("apiCatalog") {
                         ApiCatalogScreen(
-                            viewModel = apiViewModel,
+                            viewModel = apiPlantViewModel,
                             onVolver = { navController.popBackStack() }
                         )
                     }

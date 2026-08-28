@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.diariodeplantas.data.remote.ApiUiState
-import com.example.diariodeplantas.ui.ApiPlantViewModel
+import com.example.diariodeplantas.ui.viewmodel.ApiPlantViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,40 +25,66 @@ fun ApiCatalogScreen(
                 title = { Text("Guía Botánica Remota") },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 }
             )
         }
-    ) { padding ->
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
         ) {
             when (val state = viewModel.uiState) {
-                is ApiUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                is ApiUiState.Error -> Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Error de conexión con el servidor")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.obtenerCatalogoRemoto() }) {
-                        Text("Reintentar")
+                is ApiUiState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                is ApiUiState.Error -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Error de conexión con el servidor")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { viewModel.obtenerCatalogoRemoto() }) {
+                            Text("Reintentar")
+                        }
                     }
                 }
-                is ApiUiState.Success -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.plants) { planta ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(planta.name, style = MaterialTheme.typography.titleMedium)
-                                Text("Categoría: ${planta.category}", style = MaterialTheme.typography.bodySmall)
-                                Text("Riego: ${planta.waterRequirement}", style = MaterialTheme.typography.bodySmall)
+                is ApiUiState.Success -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.plants) { planta ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = planta.name ?: "Sin nombre",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Tipo: ${planta.category ?: "No especificado"}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Riego: ${planta.waterRequirement ?: "No especificado"}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
                         }
                     }
